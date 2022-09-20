@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
+import  * as XLSX from 'xlsx'
 import MaterialTable from 'material-table'
-import XLSX from 'xlsx'
+import { CsvBuilder } from 'filefy';
 
 const EXTENSIONS = ['xlsx', 'xls', 'csv']
 function App() {
@@ -15,15 +16,22 @@ function App() {
   }
 
   const convertToJson = (headers, data) => {
+    const indexes = []
     const rows = []
     data.forEach(row => {
       let rowData = {}
       row.forEach((element, index) => {
-        rowData[headers[index]] = element
+        rowData[headers[index]] = element  
+        indexes.push(headers[index])
       })
       rows.push(rowData)
-
     });
+    let uniqueChars = indexes.filter((element, index) => {
+      return indexes.indexOf(element) === index;
+    });
+    const aux = uniqueChars.map(head => ({ title: head, field: head}))
+    setColDefs(aux);
+    console.log(rows)
     return rows
   }
 
@@ -32,26 +40,42 @@ function App() {
 
     const reader = new FileReader()
     reader.onload = (event) => {
-      //parse data
-
+      //parseo de datos
       const bstr = event.target.result
       const workBook = XLSX.read(bstr, { type: "binary" })
-
-      //get first sheet
+      //obtener hoja
       const workSheetName = workBook.SheetNames[0]
       const workSheet = workBook.Sheets[workSheetName]
-      //convert to array
-      const fileData = XLSX.utils.sheet_to_json(workSheet, { header: 1 })
-      // console.log(fileData)
+  
+      //conversion en arreglo
+      const fileData = XLSX.utils.sheet_to_json(workSheet, { header: 1, blankrows:false })
       const headers = fileData[0]
-      const heads = headers.map(head => ({ title: head, field: head }))
-      setColDefs(heads)
-
-      //removing header
+      //validacion de caracteres
       fileData.splice(0, 1)
+      for(let i=0; i<fileData.length; i++){
+        for(let j=0; j<fileData[i].length; j++){
+          //validacion de caracteres especiales
+          // eslint-disable-next-line 
+          fileData[i][j]= fileData[i][j].toString().replace(/[&\/\\#,+$~%'":*?<>{}=]/g, '')
+          if(fileData[i][j].includes(']')){
+            fileData[i][j]=fileData[i][j].replace(/]/g, ")");
+          }
+          if(fileData[i][j].includes('[')){
+            fileData[i][j]=fileData[i][j].replace(/[[]/g, "(");
+          }
+          //validacion inicio y fin con _
+          if( /^_/i.test(fileData[i][j]) ) {
+            fileData[i][j]=fileData[i][j].slice(1)
+          }
+          if( /_$/i.test(fileData[i][j])) {
+            fileData[i][j]=fileData[i][j].slice(0, -1)
+          }
+          
+      }
+    } 
 
-
-      setData(convertToJson(headers, fileData))
+      setData(convertToJson(headers, fileData))   
+      
     }
 
     if (file) {
@@ -59,7 +83,7 @@ function App() {
         reader.readAsBinaryString(file)
       }
       else {
-        alert("Invalid file input, Select Excel, CSV file")
+        alert("Archivo no valido")
       }
     } else {
       setData([])
@@ -67,12 +91,33 @@ function App() {
     }
   }
 
+  
+
   return (
-    <div className="App">
-      <h1 align="center">React-App</h1>
-      <h4 align='center'>Import Data from Excel, CSV in Material Table</h4>
+    <div style={{ maxWidth: "100%" }}>
+      <h1 align="center">Enexum - Prestashop</h1>
+      <h4 align='center'>Convertidor de Excel to CSV</h4>
       <input type="file" onChange={importExcel} />
-      <MaterialTable title="Olympic Data" data={data} columns={colDefs} />
+      <MaterialTable
+      columns={colDefs}
+      data={data}
+      title="Planilla Productos"
+      options={{
+        exportButton: true,
+        exportCsv: (colDefs, data) => {
+          console.log(data)
+          const columns = colDefs.filter(columnDef => columnDef["export"] !== false);
+          const exportedData = data.map(rowData => columns.map(columnDef => rowData[columnDef.field]));
+          var csvBuilder = new CsvBuilder("productos.csv")
+            .setDelimeter(']')
+            .setColumns(columns.map(columnDef => columnDef.title))
+            .addRows(exportedData)
+            .exportFile();
+        }
+       
+      }}
+    />
+    
     </div>
   );
 }
