@@ -20,7 +20,7 @@ const style = {
   };
 
 
-const Modales = ({ setOpen, copiaLink, linkImg, setLinkImg, open,data}) => {
+const Modales = ({ verifyLink, setOpen, copiaLink, linkImg, setLinkImg, open}) => {
 
     function validarURL(string) {
       let url;
@@ -32,32 +32,13 @@ const Modales = ({ setOpen, copiaLink, linkImg, setLinkImg, open,data}) => {
     
       return url.protocol === "http:" || url.protocol === "https:";
     }
-    const agregarLink = (url) => {
-      copiaLink = url
-        if(validarURL(url)){
-            data.forEach((item) => {
-                if(item.IMAGEN.includes('|')){
-                    item.IMAGEN= url+item.IMAGEN
-                    item.IMAGEN=item.IMAGEN.replace(/[|]/g, '|'+url)
-                }else{
-                    item.IMAGEN= url+item.IMAGEN
-                }
-            });
-        }
-        else{
-        }
-    }
+    
     const handleClose = () => {
       if(linkImg){
-          agregarLink(linkImg)
+        validarURL(linkImg)
+        verifyLink(copiaLink)
       }
       setOpen(false)}
-
-
-  
-
-
-    
 
   return (
     <div>

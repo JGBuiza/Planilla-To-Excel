@@ -31,15 +31,31 @@ const Excel = ({setOpen, open, data, setData}) => {
     const verifyLink =  (copiaLink) => {
       if(copiaLink){
         data.forEach((item) => {
+          item.IMAGEN= item.IMAGEN.replaceAll(' ','');
             if(item.IMAGEN.includes('|')){
               item.IMAGEN= item.IMAGEN.replace(copiaLink,'');
-              item.IMAGEN= item.IMAGEN.replace('|'+copiaLink,'|');
+              item.IMAGEN= item.IMAGEN.replaceAll('|'+copiaLink,'|');
 
             }else{
               item.IMAGEN= item.IMAGEN.replace(copiaLink,'');
             }
          
-      });}}
+      })}else{
+        if(linkImg){
+          data.forEach((item) => {
+            item.IMAGEN= item.IMAGEN.replaceAll(' ','');
+            if(item.IMAGEN.includes('|')){
+                item.IMAGEN= linkImg+item.IMAGEN
+                item.IMAGEN=item.IMAGEN.replace(/[|]/g, '|'+linkImg)
+  
+            }else{
+                item.IMAGEN= linkImg+item.IMAGEN
+            }
+         
+      })
+        }
+        
+      }}
     // eslint-disable-next-line
     useEffect(() => { verifyLink( copiaLink) }, [copiaLink])
 
@@ -61,43 +77,48 @@ const Excel = ({setOpen, open, data, setData}) => {
     const convertToJson = (headers, data) => {
     const indexes = []
     let caracteristica = []
+    let valores = []
     const celdas = []
-    data.forEach(row => {
-        let dato = {}
-        row.forEach((element, index) => {
-          if(headers[index].includes('CARACTERÍSTICA') ||headers[index].includes('VALOR') ){
-            if(headers[index].includes('CARACTERÍSTICA')){
-              let clave = element+ ':'
-              caracteristica.push(clave)
+    let dato = {}
+   
+        data.forEach(row => {
+          row.forEach((element, index) => {
+            if(headers[index].includes('CARACTERÍSTICA') ||headers[index].includes('VALOR') ){
+              if(headers[index].includes('CARACTERÍSTICA')){
+                let clave = element+ ':'
+                caracteristica.push(clave)
+              }else{
+                let valor = element+ ':' 
+                caracteristica.push(valor)
+                var Orden = headers[index].charAt(headers[index].length-1);
+                parseInt(Orden)
+                Orden--;
+                Orden.toString()
+                caracteristica.push(Orden+ '|')
+              }
             }else{
-              let valor = element+ ':' 
-              caracteristica.push(valor)
-              var Orden = headers[index].charAt(headers[index].length-1);
-              parseInt(Orden)
-              Orden--;
-              Orden.toString()
-              caracteristica.push(Orden+ '|')
+              indexes.push(headers[index])
+              dato[headers[index]] = element  
             }
-          }else{
-            indexes.push(headers[index])
-            dato[headers[index]] = element  
-          }
-          
-        })  
-          if(caracteristica.length>0){
-            console.log(caracteristica)
-            indexes.push('CARACTERÍSTICA')
-            let aux = caracteristica.toString().replace(/[,]/g, "");
-            dato['CARACTERÍSTICA'] = aux.substr(0, aux.length - 1);
-            celdas.push(dato)
-          }else{
-          celdas.push(dato)}
+            if(caracteristica.length>0){
+              indexes.push('CARACTERÍSTICA')
+              let aux = caracteristica.toString().replace(/[,]/g, "");
+              dato['CARACTERÍSTICA'] = aux.substr(0, aux.length - 1);
+              celdas.push(dato)
+            }else{
+            celdas.push(dato)}      
+            caracteristica = []
+          })  
+            
+        });
+  
         
-        caracteristica = []
-    });
+ 
     filtrarColumnas(indexes)
     return celdas
     }
+
+
     function Recargar() {
       window.location.reload(false);
     }
@@ -135,14 +156,14 @@ const Excel = ({setOpen, open, data, setData}) => {
           let descInicio = headers.indexOf('Fecha Desde (aaaa-mm-dd hh:mm:ss)')
           let descTermino = headers.indexOf('Fecha Hasta (aaaa-mm-dd hh:mm:ss)')
           let descMonto = headers.indexOf('Descuento por monto')
+          let nombre = headers.indexOf('Nombre')
+          let precioNeto = headers.indexOf('Precio Neto')
+          let precioIVA = headers.indexOf('Precio Con IVA INCLUIDO')
           let descPorcentaje = headers.indexOf('Descuento por %')
           //validacion de caracteres
           for(let i=0; i<fileData.length; i++){
             for(let j=0; j<fileData[i].length; j++){
-              //puntos por barras
-              if(typeof fileData[i][j] ==='number'){
-                fileData[i][j]=fileData[i][j].toString().replace(/[.]/g, "|");
-              }
+              
               //validacion nulos
               if (typeof fileData[i][j] == 'undefined') {
                 fileData[i][j]= ''
@@ -152,12 +173,12 @@ const Excel = ({setOpen, open, data, setData}) => {
               if(j===descCorta || j===descLarga){
                 // eslint-disable-next-line 
                 fileData[i][j]= fileData[i][j].toString().replace(/["/&\\\#+$~%':*?{}]/g, '')
-              } if(j=== descInicio|| j===descTermino){
+              } 
+              if(j=== descInicio|| j===descTermino){
                 if(moment(fileData[i][j], "YYYY-MM-DD HH:mm:ss", true).isValid()=== false){
                   // eslint-disable-next-line 
                   fileData[i][j]= fileData[i][j].toString().replace(/[/]/g, '-')
-                  //console.log(fileData[i][j].charAt(2)==='-')
-              
+              //Verificar orden de la fecha
                  if(fileData[i][j].charAt(2)==='-'){
                   let string1 = fileData[i][j].substring(0, 10).split('').reverse().join('')
                   let string2 = fileData[i][j].substring(11)
@@ -167,38 +188,55 @@ const Excel = ({setOpen, open, data, setData}) => {
                 }   
               }
               else{
-                // eslint-disable-next-line 
-                fileData[i][j]= fileData[i][j].toString().replace(/[&\\\/#+$<>~%':*?{}=]/g, '')
+                if(j=== nombre || j=== precioNeto || j=== precioIVA){
+                  if(j=== precioNeto || j=== precioIVA){
+                    if(fileData[i][j].toString().includes('.')){
+                      let aux = fileData[i][j].toString()
+                      fileData[i][j]=aux.substring(0, aux.lastIndexOf('.'))
+                    }
+                    
+                  }
+                }else{
+                  //puntos por barras
+                  if(typeof fileData[i][j] ==='number'){
+                    fileData[i][j]=fileData[i][j].toString().replace(/[.]/g, "|");
+                  }
+                  // eslint-disable-next-line 
+                  fileData[i][j]= fileData[i][j].toString().replace(/[&\\\/#+$<>~%':*?{}=]/g, '')
+
+                  if(fileData[i][j].includes(']')){
+                    fileData[i][j]=fileData[i][j].replace(/]/g, ")");
+                  }
+                  if(fileData[i][j].includes('[')){
+                    fileData[i][j]=fileData[i][j].replace(/[[]/g, "(");
+                  }
+                  if(fileData[i][j].includes(',')){
+                    fileData[i][j]=fileData[i][j].replace(/[,]/g, "|");
+                  }
+                  if(fileData[i][j].includes(';')){
+                    fileData[i][j]=fileData[i][j].replace(/[;]/g, "|");
+                  }
+                  //validacion inicio y fin con _
+                  if( /^_/i.test(fileData[i][j]) ) {
+                    fileData[i][j]=fileData[i][j].slice(1)
+                  }
+                  if( /_$/i.test(fileData[i][j])) {
+                    fileData[i][j]=fileData[i][j].slice(0, -1)
+                  }
+                  //validacion de columnas numericas
+                  if(j===estado||j===categorias||j===stock||j===peso
+                    ||j===impuestos||j===eliminarImg||j===oferta || j===descMonto ){
+                    fileData[i][j]= fileData[i][j].toString().replace(/[^\d.|]/g, '');
+                  }
+                  if(j===descPorcentaje){
+                    //Quitar los porcentajes
+                    fileData[i][j]= fileData[i][j].toString().replace(/[|]/g, '');
+                    fileData[i][j]= fileData[i][j].toString().replace(/[^\d]/g, '');
+                  }
+                }
+                
               }
-              if(fileData[i][j].includes(']')){
-                fileData[i][j]=fileData[i][j].replace(/]/g, ")");
-              }
-              if(fileData[i][j].includes('[')){
-                fileData[i][j]=fileData[i][j].replace(/[[]/g, "(");
-              }
-              if(fileData[i][j].includes(',')){
-                fileData[i][j]=fileData[i][j].replace(/[,]/g, "|");
-              }
-              if(fileData[i][j].includes(';')){
-                fileData[i][j]=fileData[i][j].replace(/[;]/g, "|");
-              }
-              //validacion inicio y fin con _
-              if( /^_/i.test(fileData[i][j]) ) {
-                fileData[i][j]=fileData[i][j].slice(1)
-              }
-              if( /_$/i.test(fileData[i][j])) {
-                fileData[i][j]=fileData[i][j].slice(0, -1)
-              }
-              //validacion de columnas numericas
-              if(j===estado||j===categorias||j===stock||j===peso
-                ||j===impuestos||j===eliminarImg||j===oferta || j===descMonto ){
-                fileData[i][j]= fileData[i][j].toString().replace(/[^\d.|]/g, '');
-              }
-              if(j===descPorcentaje){
-                //console.log(fileData[i][j])
-                fileData[i][j]= fileData[i][j].toString().replace(/[0|]/g, '');
-                fileData[i][j]= fileData[i][j].toString().replace(/[^\d]/g, '');
-              }
+              
               
           }
         } 
@@ -222,7 +260,7 @@ const Excel = ({setOpen, open, data, setData}) => {
     
       {data? <><Button sx={{ m: 2, mx: 10 }} startIcon={<FontAwesomeIcon icon={faRotate} />} onClick={Recargar} variant="contained" component="label">Recargar</Button><Button variant="contained" color="warning" startIcon={<FontAwesomeIcon icon={faLink} />} onClick={handleOpen}>Link imagenes</Button>
 startIcon={<FontAwesomeIcon icon={faFile} />}
-      <Button sx={{ mx: 4}} color="success" startIcon={<FontAwesomeIcon icon={faDownload} />} variant="contained">
+      <Button sx={{ mx: 2}} color="success" startIcon={<FontAwesomeIcon icon={faDownload} />} variant="contained">
       <CSVLink data={data} className="btn-descargar"  headers={headers} filename={"planilla.csv"} separator={"]"} enclosingCharacter={``}>
       Descargar csv
     </CSVLink></Button> </>: <div><Button sx={{ m: 2, mx: 10 }}  variant="contained" startIcon={<FontAwesomeIcon icon={faFile} />} component="label">Subir Archivo
@@ -362,9 +400,9 @@ startIcon={<FontAwesomeIcon icon={faFile} />}
    
     </div></>}
 
-    <Modales  setLinkImg={setLinkImg} linkImg={linkImg} 
-    copiaLink={copiaLink} data={data}
-      open={open}  setOpen={setOpen}  />
+    <Modales  verifyLink={verifyLink} setOpen={setOpen}
+     linkImg={linkImg} copiaLink={copiaLink}
+     setLinkImg={setLinkImg} open={open}/>
     </div>
   )
 }
