@@ -77,8 +77,68 @@ const Excel = ({setOpen, open, data, setData}) => {
       const convertToJson = (headers, data) => {
         const indexes = []
         let caracteristica = []
+        let valores = []
         const celdas = []
-        data.forEach(row => {
+        if(headers.includes('SKU HIJO')){
+          data.forEach(row => {
+            let dato = {}
+            row.forEach((element, index) => {
+              
+                if(headers[index].includes('ATRIBUTO')){
+                  if(element === 'Color'){
+                    let clave = element+ ':color'
+                    caracteristica.push(clave)
+                    var Orden = headers[index].charAt(headers[index].length-1);
+                    parseInt(Orden)
+                    Orden--;
+                    Orden.toString()
+                    caracteristica.push(':'+Orden+ '|')
+                  }
+                  else{
+                    let clave = element+ ':select'
+                    caracteristica.push(clave)
+                    Orden = headers[index].charAt(headers[index].length-1);
+                    parseInt(Orden)
+                    Orden--;
+                    Orden.toString()
+                    caracteristica.push(':'+Orden+ '|')
+                  }
+                  
+                }
+                if(headers[index].includes('VALOR')){
+                  let valor = element+ ':' 
+                  valores.push(valor)
+                  Orden = headers[index].charAt(headers[index].length-1);
+                  parseInt(Orden)
+                  Orden--;
+                  Orden.toString()
+                  valores.push(Orden+ '|')
+                  
+                }
+               
+              else{
+                indexes.push(headers[index])
+                dato[headers[index]] = element  
+              } 
+            })
+            if(caracteristica.length>0){
+              indexes.push('ATRIBUTO')
+              let aux = caracteristica.toString().replace(/[,]/g, "");
+              dato['ATRIBUTO'] = aux
+              celdas.push(dato)
+              caracteristica = []
+            }if(valores.length> 0){
+              indexes.push('VALORES')
+              let aux = valores.toString().replace(/[,]/g, "");
+              dato['VALORES'] = aux
+              celdas.push(dato)
+              valores = []
+            }
+          else{
+          celdas.push(dato)} 
+          })
+        }else{
+          data.forEach(row => {
             let dato = {}
             row.forEach((element, index) => {
               if(headers[index].includes('CARACTERÍSTICA') ||headers[index].includes('VALOR') ){
@@ -111,6 +171,8 @@ const Excel = ({setOpen, open, data, setData}) => {
             
             caracteristica = []
         });
+        }
+        
         filtrarColumnas(indexes)
         return celdas
         }
