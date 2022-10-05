@@ -74,51 +74,46 @@ const Excel = ({setOpen, open, data, setData}) => {
         return EXTENSIONS.includes(extension) // return boolean
       }
     
-    const convertToJson = (headers, data) => {
-    const indexes = []
-    let caracteristica = []
-    let valores = []
-    const celdas = []
-    let dato = {}
-   
+      const convertToJson = (headers, data) => {
+        const indexes = []
+        let caracteristica = []
+        const celdas = []
         data.forEach(row => {
-          row.forEach((element, index) => {
-            if(headers[index].includes('CARACTERÍSTICA') ||headers[index].includes('VALOR') ){
-              if(headers[index].includes('CARACTERÍSTICA')){
-                let clave = element+ ':'
-                caracteristica.push(clave)
+            let dato = {}
+            row.forEach((element, index) => {
+              if(headers[index].includes('CARACTERÍSTICA') ||headers[index].includes('VALOR') ){
+                if(headers[index].includes('CARACTERÍSTICA')){
+                  let clave = element+ ':'
+                  caracteristica.push(clave)
+                }else{
+                  let valor = element+ ':' 
+                  caracteristica.push(valor)
+                  var Orden = headers[index].charAt(headers[index].length-1);
+                  parseInt(Orden)
+                  Orden--;
+                  Orden.toString()
+                  caracteristica.push(Orden+ '|')
+                }
               }else{
-                let valor = element+ ':' 
-                caracteristica.push(valor)
-                var Orden = headers[index].charAt(headers[index].length-1);
-                parseInt(Orden)
-                Orden--;
-                Orden.toString()
-                caracteristica.push(Orden+ '|')
+                indexes.push(headers[index])
+                dato[headers[index]] = element  
               }
-            }else{
-              indexes.push(headers[index])
-              dato[headers[index]] = element  
-            }
-            if(caracteristica.length>0){
-              indexes.push('CARACTERÍSTICA')
-              let aux = caracteristica.toString().replace(/[,]/g, "");
-              dato['CARACTERÍSTICA'] = aux.substr(0, aux.length - 1);
-              celdas.push(dato)
-            }else{
-            celdas.push(dato)}      
-            caracteristica = []
-          })  
+              
+            })  
+              if(caracteristica.length>0){
+                console.log(caracteristica)
+                indexes.push('CARACTERÍSTICA')
+                let aux = caracteristica.toString().replace(/[,]/g, "");
+                dato['CARACTERÍSTICA'] = aux.substr(0, aux.length - 1);
+                celdas.push(dato)
+              }else{
+              celdas.push(dato)}
             
+            caracteristica = []
         });
-  
-        
- 
-    filtrarColumnas(indexes)
-    return celdas
-    }
-
-
+        filtrarColumnas(indexes)
+        return celdas
+        }
     function Recargar() {
       window.location.reload(false);
     }
