@@ -13,12 +13,7 @@
   --ag-font-family: monospace;
 }
 
-.titulo {
-  margin: 0px;
-  padding: 10px;
-  background:#000000;
-  color: #fff;
-}
+
 
 .App-logo {
   height: 40vmin;
@@ -51,6 +46,11 @@
 
 .celdas {
   padding: 0px;
+}
+
+.botones {
+  padding-top: 8%;
+  background: #000;
 }
 
 @keyframes App-logo-spin {

@@ -9,9 +9,7 @@ import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
 import { faGear } from '@fortawesome/free-solid-svg-icons/faGear';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
-import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 const EXTENSIONS = ['xlsx', 'xls', 'csv']
 
@@ -22,11 +20,10 @@ const Excel = ({setOpen, open, data, setData}) => {
     const [celda, setCelda] = useState('')
     const [headers, setHeaders] = useState()
     const [linkImg, setLinkImg] = useState()
-    const [openGuia, setOpenGuia] = useState(false);
     const [openParametros, setOpenParametros] = useState(false);
-    const [openImportante, setOpenImportante] = useState(false);
     const [cambios, setCambios] = useState()
     let copiaLink
+   
 
     const handleOpen = () => {
       if(headers.includes("IMAGEN")){
@@ -38,13 +35,8 @@ const Excel = ({setOpen, open, data, setData}) => {
       
     };   
     
-    const handleOpenGuia = () => {
-        setOpenGuia(true)
-    }; 
 
-    const handleOpenImportante = () => {
-      setOpenImportante(true)
-  }; 
+   
 
   const handleOpenParametros = () => {
       setOpenParametros(true)
@@ -218,9 +210,7 @@ const Excel = ({setOpen, open, data, setData}) => {
     
 
     const importExcel = (e) => {
-      
         const file = e.target.files[0]
-    
         const reader = new FileReader()
         reader.onload = (event) => {
           //parseo de datos
@@ -235,7 +225,7 @@ const Excel = ({setOpen, open, data, setData}) => {
           const encabezados = fileData[0]
           const headers = [];
           encabezados.forEach(element => {
-            headers.push(element.toUpperCase());
+            headers.push(element.toUpperCase().trim());
           });
           //Fuera el header 
           fileData.splice(0, 1)
@@ -255,7 +245,7 @@ const Excel = ({setOpen, open, data, setData}) => {
           let descInicio = headers.indexOf('FECHA DESDE (AAAA-MM-DD HH:MM:SS)')
           let descTermino = headers.indexOf('FECHA HASTA (AAAA-MM-DD HH:MM:SS)')
           let descMonto = headers.indexOf('DESCUENTO POR MONTO')
-          let nombre = headers.indexOf('NOMBRE')
+          let nombre = headers.indexOf('NOMBRE DE PRODUCTO')
           let precioNeto = headers.indexOf('PRECIO')
           let precioIVA = headers.indexOf('PRECIO CON IVA INCLUIDO')
           let descPorcentaje = headers.indexOf('DESCUENTO POR %')
@@ -265,10 +255,17 @@ const Excel = ({setOpen, open, data, setData}) => {
           for(let i=0; i<fileData.length; i++){
             for(let j=0; j<fileData[i].length; j++){
               let verificarCambio = fileData[i][j]+""
-              
               //validacion nulos
               if (typeof fileData[i][j] == 'undefined') {
                 fileData[i][j]= ''
+              }
+
+               //validacion inicio y fin con _
+               if( /^_/i.test(fileData[i][j]) ) {
+                fileData[i][j]=fileData[i][j].slice(1)
+              }
+              if( /_$/i.test(fileData[i][j])) {
+                fileData[i][j]=fileData[i][j].slice(0, -1)
               }
               //barrido de caracteres
               // eslint-disable-next-line 
@@ -300,11 +297,20 @@ const Excel = ({setOpen, open, data, setData}) => {
               }
               else{
                 if(j=== nombre || j=== precioNeto || j=== precioIVA){
+                  if(j=== nombre){
+                    fileData[i][j]= fileData[i][j].toString().replace(/]/g, '')
+                    fileData[i][j]= fileData[i][j].toString().replace(/[#=+;]/g, '')
+                  }
                   if(j=== precioNeto || j=== precioIVA){
+                    if(typeof fileData[i][j] ==='number'){
+                      let aux = fileData[i][j].toString()
+                      fileData[i][j]=aux.split('.')[0]
+                    }
                     fileData[i][j]=fileData[i][j].toString().replace(/[$]/g, "");
+                    
                     if(fileData[i][j].toString().includes(',')){
                       let aux = fileData[i][j].toString()
-                      fileData[i][j]=aux.substring(0, aux.lastIndexOf(','))
+                      fileData[i][j]=aux.split(',')[0]
                     }
                     
                   }
@@ -322,13 +328,7 @@ const Excel = ({setOpen, open, data, setData}) => {
                   if(fileData[i][j].includes('[')){
                     fileData[i][j]=fileData[i][j].replace(/[[]/g, "(");
                   }
-                  //validacion inicio y fin con _
-                  if( /^_/i.test(fileData[i][j]) ) {
-                    fileData[i][j]=fileData[i][j].slice(1)
-                  }
-                  if( /_$/i.test(fileData[i][j])) {
-                    fileData[i][j]=fileData[i][j].slice(0, -1)
-                  }
+                 
                   //validacion de columnas numericas
                   if(j===estado||j===categorias||j===stock||j===peso
                     ||j===impuestos||j===eliminarImg||j===oferta || j===descMonto ){
@@ -370,20 +370,17 @@ const Excel = ({setOpen, open, data, setData}) => {
         }
       }  
   return (
-    <div>
-    
+    <div className="botones" >
       {data? <><Button size="small" sx={{m: 2 , mx: 10 }} startIcon={<FontAwesomeIcon icon={faRotate} />} onClick={Recargar} variant="contained" component="label">Recargar</Button>
-      <Button size="small" variant="contained" color="warning" startIcon={<FontAwesomeIcon icon={faLink} />} onClick={handleOpen}>Link imagenes</Button> }
+      <Button size="small" sx={{ ml: 48}} variant="contained" color="warning" startIcon={<FontAwesomeIcon icon={faLink} />} onClick={handleOpen}>Link imagenes</Button>}
       <Button  size="small" sx={{ mx: 2}} color="success" startIcon={<FontAwesomeIcon icon={faDownload} />} variant="contained">
-      <CSVLink  onClick={exportExcel}  sx={{ mx: 2}} data={data} className="btn-descargar"  headers={headers} filename={"planilla.csv"} separator={separador} enclosingCharacter={celda}>
+      <CSVLink href="../Planillas/my-fyle.xlsx" onClick={exportExcel}  sx={{ mx: 2}} data={data} className="btn-descargar"  headers={headers} filename={"planilla.csv"} separator={separador} enclosingCharacter={celda}>
       Descargar csv
     </CSVLink></Button> <Button size="small" sx={{ mx: 2}} variant="contained" color="inherit" startIcon={<FontAwesomeIcon icon={faGear} />} onClick={handleOpenParametros}>Parametros</Button>
-    <Button size="small" sx={{ mx: 2}} variant="contained" color="inherit" startIcon={<FontAwesomeIcon icon={faCircleQuestion} />} onClick={handleOpenGuia}>Guia Planilla</Button> 
-    <Button size="small" sx={{ mx: 2}} variant="contained" color="error" onClick={handleOpenImportante} startIcon={<FontAwesomeIcon icon={faCircleInfo} />} >Importante</Button></>: <div>
+    </>: <div>
     <Button size="small" sx={{ m: 2, mx: 10 }}  variant="contained" startIcon={<FontAwesomeIcon icon={faFile} />} component="label">Subir Archivo
-    <input hidden type="file" onChange={importExcel} /></Button>  <Button size="small" sx={{ mx: 4}} variant="contained" color="inherit" startIcon={<FontAwesomeIcon icon={faGear} />} onClick={handleOpenParametros}>Parametros</Button>
-       <Button size="small" sx={{ mx: 4}} variant="contained" color="inherit" startIcon={<FontAwesomeIcon icon={faCircleQuestion} />} onClick={handleOpenGuia}>Guia Planilla</Button>
-    <Button size="small" sx={{ mx: 4}} variant="contained" color="error" onClick={handleOpenImportante} startIcon={<FontAwesomeIcon icon={faCircleInfo} />} >Importante</Button></div>}  
+    <input hidden type="file" onChange={importExcel} /></Button> 
+    </div>}  
 
     {data? <><div style={{ padding: "40px", backgroundColor:"#949494", height: "100% " }}>   
     <MaterialTable
@@ -521,9 +518,8 @@ const Excel = ({setOpen, open, data, setData}) => {
     </div></>}
 
     <Modales  verifyLink={verifyLink} setOpen={setOpen}
-     linkImg={linkImg} copiaLink={copiaLink} openGuia={openGuia} 
-     setLinkImg={setLinkImg} open={open} setOpenGuia={setOpenGuia}
-     openImportante={openImportante} setOpenImportante={setOpenImportante}
+     linkImg={linkImg} copiaLink={copiaLink} 
+     setLinkImg={setLinkImg} open={open} 
      openParametros={openParametros} setOpenParametros={setOpenParametros}
      separador={separador} celda={celda} setSeparador={setSeparador} setCelda={setCelda}/>
     </div>

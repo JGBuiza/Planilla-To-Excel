@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
-import Excel from './components/Excel';
+import Home from './Home';
+import Guia from './Guia';
+import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
+import Importante from './Importante';
+import Clientes from './Clientes';
 
 function App() {
-  const [data, setData] = useState()
-  const [open, setOpen] = useState(false);
-  
+ 
   return (
-    <div style={{ maxWidth: "100%", backgroundColor:"#000" }}>
-      <h1 className="titulo" align="center">Exportador de Planillas CSV</h1>
-      <h4 className="titulo" align='center'>Enexum</h4>
-      <Excel setOpen={setOpen}  open={open}  data={data} setData={setData}  />
-      
-    </div>
+    <>
+    <Router>  
+    <Routes>
+      <Route  path="/"  element={<Home />}/> 
+      <Route  path="/guia"  element={<Guia />}/> 
+      <Route  path="/importante"  element={<Importante />}/> 
+      <Route  path="/clientes"  element={<Clientes />}/> 
+    </Routes>
+    </Router>
+    
+    </>
   );
 }
 
