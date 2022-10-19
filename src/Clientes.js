@@ -33,19 +33,19 @@ const Clientes = () => {
   const renderSwitch = (param) =>{
     switch(param) {
       case 1:
-        return 'Carro y Cotizador';
+        return 'Tiene carro de compras y carro cotizador, no tiene regla de impuestos activa por lo que los precios en planilla siempre se cargan con IVA.';
       case 2:
-        return 'Cotizador';
+        return 'Tiene carro cotizador, no tiene regla de impuestos activa por lo que los precios en planilla siempre se cargan con IVA.';
       case 3:
-        return '';
+        return 'Tiene carro de compras, tiene regla de impuestos activa bajo el ID 1, los precios en planilla se cargan sin IVA (PRECIO NETO) y con la columna ID IMPUESTOS.';
       case 4:
-        return 'Carro';
+        return 'Tiene carro de compras, tiene regla de impuestos activa bajo el ID 1, los precios en planilla se cargan sin IVA (PRECIO NETO) y con la columna ID IMPUESTOS.';
       case 5:
-        return 'Cotizador';
+        return 'Tiene carro cotizador, no tiene regla de impuestos activa por lo que los precios en planilla siempre se cargan con IVA.';
       case 6:
-        return 'Carro';
+        return 'Tiene carro de compras, tiene regla de impuestos activa bajo el ID 3, los precios en planilla se cargan sin IVA (PRECIO NETO) y con la columna ID IMPUESTOS.';
       case 7:
-        return 'Carro y Cotizador';
+        return 'Tiene carro de compras y carro cotizador, tiene regla de impuestos activa bajo el ID 4, los precios en planilla se cargan sin IVA (PRECIO NETO) y con la columna ID IMPUESTOS.';
       case 8:
         return 'Cotizador';
       case 9:
